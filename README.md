@@ -373,20 +373,6 @@ terraform state mv 'aws_instance.web' 'aws_instance.web_server'
 terraform state mv 'aws_vpc.main' 'module.vpc.aws_vpc.main'
 ```
 
-```markdown
-## State Management (11-20) - Continued
-
-### 15. Explain `terraform state mv` and `terraform state rm`.
-
-**State mv** - Rename/move resources in state:
-```bash
-# Move resource to new address
-terraform state mv 'aws_instance.web' 'aws_instance.web_server'
-
-# Move to module
-terraform state mv 'aws_vpc.main' 'module.vpc.aws_vpc.main'
-```
-
 **State rm** - Remove from state (doesn't destroy):
 ```bash
 # Remove manually created resource
@@ -1004,7 +990,7 @@ instance_type = var.optimize ? "t3a.micro" : "t3.micro"
 - Use modules for all reusable infra
 - CI/CD with approval gates
 - Secrets via SSM/Secrets Manager
-```
-```
+
+
 
 [1](https://www.datacamp.com/blog/terraform-interview-questions)
