@@ -1,7 +1,7 @@
 
 # Terraform + EC2 Interview Guide 
 
-This document summarizes common Terraform + EC2 interview questions and concise, production‑style answers, with example Terraform configurations. It targets roughly 3–4 years of hands‑on experience with AWS and Terraform.[web:17][web:20]
+This document summarizes common Terraform + EC2 interview questions and concise, production‑style answers, with example Terraform configurations. It targets roughly 3–4 years of hands‑on experience with AWS and Terraform.
 
 ---
 
@@ -9,7 +9,7 @@ This document summarizes common Terraform + EC2 interview questions and concise,
 
 ### 1.1 How does Terraform track EC2 resources? What happens if state is lost or edited?
 
-Terraform uses a **state file** to map resources in code (e.g., `aws_instance.web`) to real AWS resources (e.g., `i-0123456789abcdef`). This mapping allows Terraform to detect drift and compute create/update/destroy actions during `plan` and `apply`.[web:17][web:20]
+Terraform uses a **state file** to map resources in code (e.g., `aws_instance.web`) to real AWS resources (e.g., `i-0123456789abcdef`). This mapping allows Terraform to detect drift and compute create/update/destroy actions during `plan` and `apply`.
 
 If the state file is lost or manually edited:
 
@@ -19,9 +19,9 @@ If the state file is lost or manually edited:
 
 **Best practices:**
 
-- Store state remotely (e.g., S3 + DynamoDB lock in AWS) with encryption and versioning.[web:16]
-- Never hand‑edit the state file; instead, use `terraform state` commands when needed.[web:17]
-- Isolate state per environment (dev/stage/prod) and per major system where appropriate.[web:14]
+- Store state remotely (e.g., S3 + DynamoDB lock in AWS) with encryption and versioning.
+- Never hand‑edit the state file; instead, use `terraform state` commands when needed.
+- Isolate state per environment (dev/stage/prod) and per major system where appropriate.
 
 Example backend configuration (S3 + DynamoDB):
 
@@ -46,9 +46,9 @@ A common Terraform workflow:
 1. **Write/Update Code**  
    - Define providers, VPC, subnets, security groups, and EC2 (or ASG/launch template) resources.
 2. **Initialize**  
-   - Run `terraform init` to download providers and configure the backend.[web:17]
+   - Run `terraform init` to download providers and configure the backend.
 3. **Plan**  
-   - Run `terraform plan` to preview changes; review for destructive actions.[web:17]
+   - Run `terraform plan` to preview changes; review for destructive actions.
 4. **Apply**  
    - Run `terraform apply` to provision or update resources.
 5. **Maintain**  
@@ -84,9 +84,8 @@ resource "aws_instance" "web" {
 Typical pattern:
 
 - Create **reusable modules** (e.g., `modules/ec2_app`) that define VPC, security groups, EC2/ASG, etc.
-- Create **separate environment folders** (e.g., `envs/dev`, `envs/prod`) with different variable values and separate state backends.[web:14]
-- Use remote state per environment instead of sharing one state across all envs.[web:14][web:19]
-
+- Create **separate environment folders** (e.g., `envs/dev`, `envs/prod`) with different variable values and separate state backends.
+- Use remote state per environment instead of sharing one state across all envs.
 Example layout:
 
 ```text
@@ -145,7 +144,7 @@ module "ec2_app" {
 
 ### 3.1 Key arguments in `aws_instance` / `aws_launch_template` for production
 
-For production EC2, important settings usually include:[web:4]
+For production EC2, important settings usually include:
 
 - **Compute**: `ami`, `instance_type`
 - **Networking**: `subnet_id`, `vpc_security_group_ids`, `associate_public_ip_address`
@@ -206,8 +205,8 @@ resource "aws_instance" "app" {
 
 Approaches:
 
-- Use an `aws_ami` **data source** with filters for name, owner, and virtualization type to always find the latest matching AMI.[web:20]
-- For strict reproducibility, pass AMI IDs via variables or from a separate image pipeline (e.g., Packer/Golden AMI).[web:20]
+- Use an `aws_ami` **data source** with filters for name, owner, and virtualization type to always find the latest matching AMI.
+- For strict reproducibility, pass AMI IDs via variables or from a separate image pipeline (e.g., Packer/Golden AMI).
 - Use module variables to override AMI per environment if necessary.
 
 Example AMI lookup:
@@ -231,7 +230,7 @@ data "aws_ami" "app" {
 
 ### 4.2 How do you pass bootstrap scripts (user_data)?
 
-- Use `user_data` or `user_data_base64` on `aws_instance` or in `aws_launch_template`.[web:20]
+- Use `user_data` or `user_data_base64` on `aws_instance` or in `aws_launch_template`.
 - Keep scripts in separate template files and use `templatefile()` to inject variables.
 - Use cloud‑init or shell scripts to install and configure software.
 
@@ -273,7 +272,7 @@ Options:
 
 - On `aws_instance`, use `associate_public_ip_address` (requires appropriate subnet setting).
 - On `aws_network_interface`, set `associate_public_ip_address`, then attach ENI to the instance.
-- Use public subnets for internet‑facing instances and private subnets with NAT for internal services.[web:20]
+- Use public subnets for internet‑facing instances and private subnets with NAT for internal services.
 
 Instance‑level:
 
@@ -318,7 +317,7 @@ Typical practices:
 
 - Define **role‑based security groups** (web, app, db, bastion, etc.).
 - Use CIDR rules for public access (e.g., HTTP/HTTPS from `0.0.0.0/0` if needed).
-- Use security‑group‑to‑security‑group rules for internal communication between tiers.[web:20]
+- Use security‑group‑to‑security‑group rules for internal communication between tiers.
 - Keep security groups reusable and consistent across environments.
 
 Example:
@@ -367,7 +366,7 @@ resource "aws_security_group" "web_sg" {
 
 ### 5.3 How do you associate Elastic IPs, and when are they useful?
 
-- Use `aws_eip` to allocate a static IP and `aws_eip_association` (or `instance`/`network_interface` fields) to bind it to an instance or ENI.[web:20]
+- Use `aws_eip` to allocate a static IP and `aws_eip_association` (or `instance`/`network_interface` fields) to bind it to an instance or ENI.
 - EIPs are useful when:
   - You need stable IPs for IP whitelisting.
   - You use legacy systems that depend on fixed IPs.
@@ -395,7 +394,7 @@ resource "aws_eip_association" "bastion_assoc" {
 Options:
 
 - Use `root_block_device` and `ebs_block_device` inside `aws_instance`.
-- Use separate `aws_ebs_volume` + `aws_volume_attachment` to control lifecycle independently (common for data volumes).[web:20]
+- Use separate `aws_ebs_volume` + `aws_volume_attachment` to control lifecycle independently (common for data volumes).
 
 Example on instance:
 
@@ -443,7 +442,7 @@ resource "aws_volume_attachment" "logs_attach" {
 Typical flow:
 
 - Use a build pipeline or Packer to create golden images, then output the AMI ID.
-- Make the AMI ID available to Terraform via variables or data sources (e.g., SSM parameter, tag filtering).[web:20]
+- Make the AMI ID available to Terraform via variables or data sources (e.g., SSM parameter, tag filtering).
 - Optionally, use `aws_ami_from_instance` to snapshot a configured instance, but this is less common in pure Terraform flows.
 
 Example:
@@ -503,7 +502,7 @@ For data volumes, you can increase `size` and then expand the filesystem inside 
 
 - Create a **launch template** with AMI, instance type, security groups, and user data.
 - Create an `aws_autoscaling_group` referencing the launch template.
-- Spread instances across subnets in multiple AZs and attach an ALB/NLB target group.[web:20]
+- Spread instances across subnets in multiple AZs and attach an ALB/NLB target group.
 
 Example:
 
