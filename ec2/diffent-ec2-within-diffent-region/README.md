@@ -254,13 +254,3 @@ When asked about “different EC2 within different regions,” emphasize:
 
 ```
 
-[1](https://github.com/kung-foo/multiregion-terraform)
-[2](https://dev.to/devops4mecode/deploy-aws-resources-in-different-aws-account-and-multi-region-with-terraform-multi-provider-and-alias-ie9)
-[3](https://stackoverflow.com/questions/63496258/creating-different-ec2-instances-in-separate-azs-using-for-each-terraform)
-[4](https://stackoverflow.com/questions/71060277/terraform-create-multiple-ec2-instances-in-multiple-subnets)
-[5](https://discuss.hashicorp.com/t/creating-aws-resources-with-terraform-across-multiple-regions/25010)
-[6](https://www.youtube.com/watch?v=6hqPEgFozIc)
-[7](https://www.simplethread.com/building-a-multi-region-aws-environment-with-terraform/)
-[8](https://discuss.hashicorp.com/t/creating-multiple-instances-in-multiple-regions/27640)
-[9](https://www.reddit.com/r/Terraform/comments/10y3op8/how_to_create_aws_resources_in_different_regions/)
-[10](https://www.youtube.com/watch?v=1algvjGljdA)
