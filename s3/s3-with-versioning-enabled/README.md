@@ -85,7 +85,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "secure_sse" {
 
 Why this matters:
 
-- Versioning + encryption is a standard recommendation for buckets holding critical data such as Terraform state, logs, and backups.[web:105][web:110]  
+- Versioning + encryption is a standard recommendation for buckets holding critical data such as Terraform state, logs, and backups. 
 - Versioning allows rollbacks of state files or log recovery after accidental deletion or corruption.  
 
 ---
@@ -162,4 +162,5 @@ When asked about “S3 with versioning enabled” in Terraform, mention:
 [8](https://developer.hashicorp.com/terraform/language/backend/s3)
 [9](https://stackoverflow.com/questions/71532246/unable-to-add-versioning-configuration-for-multiple-aws-s3-in-terraform-version)
 [10](https://www.reddit.com/r/Terraform/comments/lehvdk/how_to_use_aws_s3_bucket_as_version_control/)
+
 
