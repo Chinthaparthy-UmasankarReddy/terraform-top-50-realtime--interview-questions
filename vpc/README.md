@@ -1,7 +1,7 @@
 
 # Terraform + AWS VPC Interview Guide 
 
-This document summarizes common Terraform + AWS **VPC** interview questions and concise, production‑style answers with example Terraform configurations.[web:44][web:43]
+This document summarizes common Terraform + AWS **VPC** interview questions and concise, production‑style answers with example Terraform configurations.
 
 ---
 
@@ -9,12 +9,12 @@ This document summarizes common Terraform + AWS **VPC** interview questions and 
 
 ### 1.1 How do you explain a VPC?
 
-- A VPC is a logically isolated virtual network in AWS where you define your own IP range, subnets, route tables, and gateways.[web:44]  
-- It lets you control private vs public subnets, routing, and connectivity (internet, VPN, Direct Connect, VPC peering, Transit Gateway).[web:44]  
+- A VPC is a logically isolated virtual network in AWS where you define your own IP range, subnets, route tables, and gateways. 
+- It lets you control private vs public subnets, routing, and connectivity (internet, VPN, Direct Connect, VPC peering, Transit Gateway). 
 
 Key points:
 
-- CIDR block (e.g., `10.0.0.0/16`) and subnetting strategy are foundational design decisions.[web:43]  
+- CIDR block (e.g., `10.0.0.0/16`) and subnetting strategy are foundational design decisions. 
 
 ---
 
@@ -26,7 +26,7 @@ Typical pattern:
 
 - One VPC with a `/16` CIDR.  
 - Public subnets in multiple AZs, each with a route to an Internet Gateway (IGW).  
-- Private subnets using a NAT gateway for outbound internet access.[web:43][web:44]  
+- Private subnets using a NAT gateway for outbound internet access.
 
 Example:
 
@@ -103,8 +103,8 @@ resource "aws_route_table_association" "public_a_assoc" {
 
 You should be able to explain:
 
-- Why public subnets have `map_public_ip_on_launch = true` and a default route to IGW.[web:44]  
-- Why private subnets do not have direct internet routes and often use NAT gateways instead.[web:43]  
+- Why public subnets have `map_public_ip_on_launch = true` and a default route to IGW. 
+- Why private subnets do not have direct internet routes and often use NAT gateways instead.  
 
 ---
 
@@ -115,7 +115,7 @@ You should be able to explain:
 Pattern:
 
 - Create a NAT gateway in a public subnet with an Elastic IP.  
-- Associate private subnets with a route table that routes `0.0.0.0/0` to the NAT gateway.[web:43]  
+- Associate private subnets with a route table that routes `0.0.0.0/0` to the NAT gateway.
 
 Example:
 
@@ -158,16 +158,14 @@ resource "aws_route_table_association" "private_a_assoc" {
 Explain:
 
 - Why NAT gateways must be in a **public** subnet with a route to the internet.  
-- That outbound traffic from private subnets appears to come from the NAT IP, while inbound is blocked by default.[web:43]  
-
+- That outbound traffic from private subnets appears to come from the NAT IP, while inbound is blocked by default.
 ---
 
 ## 4. VPC Peering and Connectivity
 
 ### 4.1 How do you connect two VPCs using Terraform?
 
-Use `aws_vpc_peering_connection` and update route tables in both VPCs.[web:43][web:44]  
-
+Use `aws_vpc_peering_connection` and update route tables in both VPCs.
 Example (simplified, same account/region):
 
 ```hcl
@@ -206,16 +204,15 @@ resource "aws_route" "shared_to_app" {
 
 You should mention:
 
-- Peering does not support transitive routing by default (no automatic “hub‑and‑spoke” via a third VPC).[web:43]  
-- For large, multi‑VPC topologies, Transit Gateway is often preferred.[web:43]  
-
+- Peering does not support transitive routing by default (no automatic “hub‑and‑spoke” via a third VPC). 
+- For large, multi‑VPC topologies, Transit Gateway is often preferred.
 ---
 
 ## 5. VPC Design Best Practices
 
 ### 5.1 How do you choose VPC and subnet CIDRs?
 
-Good answers include:[web:44][web:43]
+Good answers include:
 
 - Use non‑overlapping RFC1918 ranges (e.g., `10.0.0.0/16`, `10.1.0.0/16`) across environments and regions.  
 - Plan for growth; use larger VPC CIDRs and smaller subnets per AZ (`/24`, `/20`) to support scaling.  
@@ -243,7 +240,7 @@ module "vpc" {
 }
 ```
 
-Often, teams also use battle‑tested open‑source VPC modules rather than hand‑rolling everything.[web:41]  
+Often, teams also use battle‑tested open‑source VPC modules rather than hand‑rolling everything.  
 
 ---
 
@@ -251,8 +248,7 @@ Often, teams also use battle‑tested open‑source VPC modules rather than hand
 
 ### 6.1 How do you create a VPC endpoint to reach S3 privately?
 
-Use `aws_vpc_endpoint` with `service_name` like `com.amazonaws.<region>.s3` and associate it with route tables.[web:43]  
-
+Use `aws_vpc_endpoint` with `service_name` like `com.amazonaws.<region>.s3` and associate it with route tables.
 Example:
 
 ```hcl
@@ -276,21 +272,20 @@ resource "aws_vpc_endpoint" "s3_endpoint" {
 Explain:
 
 - Gateway endpoints (S3/DynamoDB) integrate with route tables; interface endpoints use ENIs and security groups.  
-- VPC endpoints allow private access to AWS services without using public internet paths.[web:43]  
-
+- VPC endpoints allow private access to AWS services without using public internet paths.
 ---
 
 ## 7. NACLs vs Security Groups
 
 ### 7.1 How do you compare Network ACLs and Security Groups in a VPC?
 
-Key differences:[web:44]
+Key differences:
 
 - NACLs: stateless, subnet‑level, ordered rules (allow/deny).  
 - Security groups: stateful, instance/ENI level, only allow rules.  
 - Many designs keep NACLs simple (mostly allow) and rely on security groups for detailed restrictions.  
 
-In Terraform, NACLs are defined with `aws_network_acl` and `aws_network_acl_rule`, but in many setups they stay close to default while SGs do most of the fine‑grained protection.[web:44]  
+In Terraform, NACLs are defined with `aws_network_acl` and `aws_network_acl_rule`, but in many setups they stay close to default while SGs do most of the fine‑grained protection.
 
 ---
 
