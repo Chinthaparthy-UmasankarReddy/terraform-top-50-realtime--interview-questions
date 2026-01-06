@@ -179,7 +179,7 @@ When asked about “IAM single user with Terraform,” you can mention:
 - Keep credentials out of code and outputs marked as sensitive; prefer roles and SSO for humans and long‑lived IAM users only for specific cases.  
 - Use a secure remote backend for IAM state and avoid manual changes in AWS to prevent drift. 
 
-```
+
 
 [1](https://www.youtube.com/watch?v=arCaEMMITH0)
 [2](https://spacelift.io/blog/terraform-iam-user)
@@ -191,3 +191,17 @@ When asked about “IAM single user with Terraform,” you can mention:
 [8](https://github.com/cloudposse/terraform-aws-iam-system-user)
 [9](https://discuss.hashicorp.com/t/terraform-resources-for-aws-iam-identity-center-successor-to-aws-single-sign-on/47310)
 [10](https://stackoverflow.com/questions/40631977/how-do-i-use-terraform-to-maintain-manage-iam-users)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
