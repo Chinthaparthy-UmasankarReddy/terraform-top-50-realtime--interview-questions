@@ -1,4 +1,4 @@
-An S3 bucket with **versioning enabled** keeps multiple versions of each object so you can recover from accidental overwrite or delete, and this is strongly recommended for important data like logs, backups, and Terraform state. Below is a `README.md`‑style example.[2][4]
+An S3 bucket with **versioning enabled** keeps multiple versions of each object so you can recover from accidental overwrite or delete, and this is strongly recommended for important data like logs, backups, and Terraform state.
 
 # Terraform: S3 Bucket With Versioning Enabled
 
@@ -162,3 +162,4 @@ When asked about “S3 with versioning enabled” in Terraform, mention:
 [8](https://developer.hashicorp.com/terraform/language/backend/s3)
 [9](https://stackoverflow.com/questions/71532246/unable-to-add-versioning-configuration-for-multiple-aws-s3-in-terraform-version)
 [10](https://www.reddit.com/r/Terraform/comments/lehvdk/how_to_use_aws_s3_bucket_as_version_control/)
+
