@@ -250,7 +250,8 @@ When asked about “different EC2 within different regions,” emphasize:
 - Use of **multiple AWS providers with aliases**, one per region.  
 - **Per‑region AMIs** and network resources (VPC, subnets, SGs) – IDs are not shared across regions.
 - Same codebase/state can safely manage multi‑region resources when providers are clearly separated.  
-- Optional evolution: split into per‑region modules, or even separate state per region if team size and blast‑radius concerns grow.[web:69]
+- Optional evolution: split into per‑region modules, or even separate state per region if team size and blast‑radius concerns grow.
 
 ```
+
 
