@@ -1,7 +1,7 @@
 
 # Terraform + AWS IAM User Interview Guide 
 
-This document summarizes common Terraform + AWS IAM **user** interview questions and concise, production‑style answers, with example Terraform configurations. It targets roughly 3–4 years of hands‑on AWS and Terraform experience.[web:17][web:20]
+This document summarizes common Terraform + AWS IAM **user** interview questions and concise, production‑style answers, with example Terraform configurations. It targets roughly 3–4 years of hands‑on AWS and Terraform experience.
 
 ---
 
@@ -9,14 +9,14 @@ This document summarizes common Terraform + AWS IAM **user** interview questions
 
 ### 1.1 How does Terraform track IAM users? What if state is lost or edited?
 
-Terraform tracks IAM users, policies, and access keys in the **state file**, mapping logical resources (e.g., `aws_iam_user.dev_user`) to actual IAM users in AWS (e.g., `arn:aws:iam::123456789012:user/dev-user`).[web:17]  
-If the state is lost or manually edited, Terraform may think IAM users do not exist and try to recreate them, potentially regenerating access keys and breaking applications that depend on the old credentials.[web:17]
+Terraform tracks IAM users, policies, and access keys in the **state file**, mapping logical resources (e.g., `aws_iam_user.dev_user`) to actual IAM users in AWS (e.g., `arn:aws:iam::123456789012:user/dev-user`).  
+If the state is lost or manually edited, Terraform may think IAM users do not exist and try to recreate them, potentially regenerating access keys and breaking applications that depend on the old credentials.
 
 **Best practices:**
 
-- Store state remotely (e.g., S3 backend with DynamoDB locking) and enable versioning.[web:16]  
-- Do not keep long‑lived IAM access keys in code or version control; use outputs securely and rotate keys regularly.[web:20]  
-- Use `terraform state` commands (not manual file edits) for imports and corrections.[web:17]  
+- Store state remotely (e.g., S3 backend with DynamoDB locking) and enable versioning.]  
+- Do not keep long‑lived IAM access keys in code or version control; use outputs securely and rotate keys regularly. 
+- Use `terraform state` commands (not manual file edits) for imports and corrections. 
 
 ---
 
@@ -24,7 +24,7 @@ If the state is lost or manually edited, Terraform may think IAM users do not ex
 
 ### 2.1 How do you create an IAM user?
 
-Use `aws_iam_user` to define the user and attach tags; optionally define console password and access keys with separate resources.[web:20]  
+Use `aws_iam_user` to define the user and attach tags; optionally define console password and access keys with separate resources. 
 
 Example:
 
@@ -42,8 +42,8 @@ resource "aws_iam_user" "dev_user" {
 
 ### 2.2 How do you create console access and access keys for a user?
 
-- Console access: use `aws_iam_user_login_profile` to set an initial password and password reset requirement.[web:20]  
-- Programmatic access: use `aws_iam_access_key` to create access keys, then provide them securely to users or systems (e.g., secret manager, password manager).[web:20]  
+- Console access: use `aws_iam_user_login_profile` to set an initial password and password reset requirement.
+- Programmatic access: use `aws_iam_access_key` to create access keys, then provide them securely to users or systems (e.g., secret manager, password manager). 
 
 Example:
 
@@ -76,9 +76,9 @@ output "dev_user_secret_access_key" {
 
 ### 3.1 Difference between AWS‑managed, customer‑managed, and inline policies in Terraform?
 
-- **AWS‑managed**: predefined policies by AWS (e.g., `AmazonS3ReadOnlyAccess`), attached via ARN using `aws_iam_user_policy_attachment`.[web:20]  
-- **Customer‑managed**: reusable policies you define with `aws_iam_policy`, then attach to multiple users/roles/groups.[web:20]  
-- **Inline policies**: `aws_iam_user_policy` resources directly attached to a specific user; good for very user‑specific permissions but less reusable.[web:20]  
+- **AWS‑managed**: predefined policies by AWS (e.g., `AmazonS3ReadOnlyAccess`), attached via ARN using `aws_iam_user_policy_attachment`. 
+- **Customer‑managed**: reusable policies you define with `aws_iam_policy`, then attach to multiple users/roles/groups.  
+- **Inline policies**: `aws_iam_user_policy` resources directly attached to a specific user; good for very user‑specific permissions but less reusable.
 
 Example – attach AWS‑managed policy:
 
@@ -148,8 +148,8 @@ resource "aws_iam_user_policy" "dev_user_inline" {
 ### 4.1 How do you manage IAM groups for multiple users?
 
 - Use `aws_iam_group` to define groups like `developers`, `ops`, `readonly`.  
-- Attach policies to groups using `aws_iam_group_policy_attachment` so you do not repeat attachments per user.[web:20]  
-- Add users to groups with `aws_iam_user_group_membership` to scale permission management.[web:20]  
+- Attach policies to groups using `aws_iam_group_policy_attachment` so you do not repeat attachments per user.  
+- Add users to groups with `aws_iam_user_group_membership` to scale permission management. 
 
 Example:
 
@@ -184,13 +184,12 @@ You can similarly add multiple users or define separate memberships.
 
 ### 4.2 IAM user vs role – how do you explain and use them in Terraform?
 
-- **IAM user**: represents a person or long‑lived identity; can have console passwords and access keys.[web:20]  
-- **IAM role**: assumed by users, services, or external accounts; does not have long‑lived keys and is better for workloads (EC2/EKS/Lambda) and temporary elevated access.[web:20]  
-
+- **IAM user**: represents a person or long‑lived identity; can have console passwords and access keys.  
+- **IAM role**: assumed by users, services, or external accounts; does not have long‑lived keys and is better for workloads (EC2/EKS/Lambda) and temporary elevated access.
 In Terraform:
 
 - Use `aws_iam_role` + `aws_iam_role_policy_attachment` for workloads and cross‑account access.  
-- Use users only where necessary (e.g., human users) and prefer roles with SSO for production.[web:20]  
+- Use users only where necessary (e.g., human users) and prefer roles with SSO for production.  
 
 ---
 
@@ -198,9 +197,9 @@ In Terraform:
 
 ### 5.1 How do you manage IAM access keys securely?
 
-- Create access keys with `aws_iam_access_key` but treat the secret as **sensitive output** and immediately store it in a secure system (password manager, secrets manager, Vault, etc.).[web:20]  
-- Avoid committing any keys to Git, logs, or chat; mark outputs as `sensitive = true` and limit who can see Terraform outputs.[web:20]  
-- Enforce rotation policies and minimum necessary permissions on each user’s attached policies.[web:20]  
+- Create access keys with `aws_iam_access_key` but treat the secret as **sensitive output** and immediately store it in a secure system (password manager, secrets manager, Vault, etc.). 
+- Avoid committing any keys to Git, logs, or chat; mark outputs as `sensitive = true` and limit who can see Terraform outputs.
+- Enforce rotation policies and minimum necessary permissions on each user’s attached policies. 
 
 Example (secure outputs):
 
@@ -224,7 +223,7 @@ output "ci_user_secret_access_key" {
 
 - Create a **new** `aws_iam_access_key` for the user.  
 - Update all systems to use the new key.  
-- Then **destroy** (or mark inactive) the old key using Terraform (remove it from code and apply).[web:20]  
+- Then **destroy** (or mark inactive) the old key using Terraform (remove it from code and apply).
 
 A safer pattern is to have, at most, two keys per user (one active, one being rotated) and explicitly manage them in Terraform so state matches reality.
 
@@ -237,8 +236,8 @@ A safer pattern is to have, at most, two keys per user (one active, one being ro
 Steps:
 
 1. Define the user resource in Terraform (e.g., `resource "aws_iam_user" "existing_user" { name = "alice" }`).  
-2. Use `terraform import aws_iam_user.existing_user alice` to populate state.[web:17]  
-3. Run `terraform plan` and reconcile configuration with reality (tags, policies, etc.).[web:17]  
+2. Use `terraform import aws_iam_user.existing_user alice` to populate state.
+3. Run `terraform plan` and reconcile configuration with reality (tags, policies, etc.).  
 
 Same pattern applies for `aws_iam_user_policy`, `aws_iam_user_policy_attachment`, and `aws_iam_access_key`. This avoids Terraform destroying or recreating existing users and keys unexpectedly.
 
@@ -248,7 +247,7 @@ Same pattern applies for `aws_iam_user_policy`, `aws_iam_user_policy_attachment`
 
 ### 7.1 Tagging IAM users
 
-- Use tags to capture team, environment, cost center, and whether the user is human vs service.[web:20]  
+- Use tags to capture team, environment, cost center, and whether the user is human vs service.  
 - Enforce consistent tags via locals or modules.
 
 Example:
@@ -275,7 +274,7 @@ resource "aws_iam_user" "alice" {
 
 Even though MFA settings aren’t fully modeled as Terraform resources for each user, good answers include:
 
-- Require MFA for console users via IAM policies or account settings.[web:20]  
+- Require MFA for console users via IAM policies or account settings.  
 - Use roles + SSO (e.g., AWS IAM Identity Center) instead of many long‑lived IAM users.  
 - Give users minimal permissions and use groups and roles to manage access centrally.
 
