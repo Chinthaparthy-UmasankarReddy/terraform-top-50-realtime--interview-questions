@@ -1,7 +1,7 @@
 
 # Terraform + AWS Security Group Interview Guide 
 
-This document summarizes common Terraform + AWS **Security Group (SG)** interview questions and concise, production‑style answers with example Terraform configurations.[web:31][web:34]
+This document summarizes common Terraform + AWS **Security Group (SG)** interview questions and concise, production‑style answers with example Terraform configurations.
 
 ---
 
@@ -9,12 +9,12 @@ This document summarizes common Terraform + AWS **Security Group (SG)** intervie
 
 ### 1.1 How do you explain a security group?
 
-- A security group is a **virtual firewall** attached to ENIs/instances that controls inbound (`ingress`) and outbound (`egress`) traffic at the instance level.[web:34]  
-- Rules are stateful: if inbound traffic is allowed, the response is automatically allowed without an explicit outbound rule.[web:34]  
+- A security group is a **virtual firewall** attached to ENIs/instances that controls inbound (`ingress`) and outbound (`egress`) traffic at the instance level. 
+- Rules are stateful: if inbound traffic is allowed, the response is automatically allowed without an explicit outbound rule. 
 
 You should distinguish:
 
-- Security groups (stateful, instance level) vs NACLs (stateless, subnet level).[web:34]  
+- Security groups (stateful, instance level) vs NACLs (stateless, subnet level).
 
 ---
 
@@ -75,14 +75,13 @@ resource "aws_security_group" "web_sg" {
 
 Key points:
 
-- Use **CIDR blocks** for internet or corporate ranges and **security group references** for internal traffic.[web:34]  
-
+- Use **CIDR blocks** for internet or corporate ranges and **security group references** for internal traffic.
 ---
 
 ### 2.2 How do you attach a security group to an instance?
 
-- With `aws_instance`, use `vpc_security_group_ids` (recommended in VPC).[web:32]  
-- With `aws_network_interface`, specify `security_groups` and later attach ENI to instances.[web:32]  
+- With `aws_instance`, use `vpc_security_group_ids` (recommended in VPC). 
+- With `aws_network_interface`, specify `security_groups` and later attach ENI to instances.
 
 Example:
 
@@ -108,9 +107,8 @@ resource "aws_instance" "web" {
 Typical pattern:
 
 - `web_sg`: internet HTTP/HTTPS, SSH from bastion/office.  
-- `app_sg`: only allow traffic from `web_sg` on app port.[web:34]  
-- `db_sg`: only allow DB port from `app_sg`.[web:34]  
-
+- `app_sg`: only allow traffic from `web_sg` on app port. 
+- `db_sg`: only allow DB port from `app_sg`.
 Example:
 
 ```hcl
@@ -138,8 +136,7 @@ resource "aws_security_group" "app_sg" {
 
 This shows:
 
-- **Security‑group‑to‑security‑group** rules for internal flows instead of wide CIDRs.[web:34]  
-
+- **Security‑group‑to‑security‑group** rules for internal flows instead of wide CIDRs.
 ---
 
 ### 3.2 When do you use separate `aws_security_group_rule` resources?
@@ -174,7 +171,7 @@ resource "aws_security_group_rule" "db_ingress_from_app" {
 
 ### 4.1 How do you organize security groups in Terraform?
 
-Common approaches:[web:34][web:33]
+Common approaches:
 
 - One module per **tier** (web/app/db) that exposes SG IDs as outputs.  
 - Central SG module for **shared patterns** (e.g., SSH from bastion, monitoring access).  
@@ -188,13 +185,13 @@ output "web_sg_id" {
 }
 ```
 
-You can also use community modules (e.g., `terraform-aws-modules/security-group/aws`) to standardize common patterns.[web:31]  
+You can also use community modules (e.g., `terraform-aws-modules/security-group/aws`) to standardize common patterns.
 
 ---
 
 ### 4.2 What are some security best practices for SGs?
 
-Strong answers include:[web:34][web:38]
+Strong answers include:
 
 - Restrict SSH/RDP to specific IP ranges or bastion hosts, **never** `0.0.0.0/0` in production.  
 - Use SG references instead of broad CIDRs between tiers.  
@@ -208,7 +205,7 @@ Strong answers include:[web:34][web:38]
 ### 5.1 How do you reuse SG logic across multiple environments?
 
 - Wrap SG definitions in a **module** and pass variables for ports, CIDRs, and tags.  
-- Use different `tfvars` files or environment modules (dev/stage/prod) to adjust allowed IPs and ports.[web:33][web:40]  
+- Use different `tfvars` files or environment modules (dev/stage/prod) to adjust allowed IPs and ports. 
 
 Example module call:
 
@@ -269,7 +266,7 @@ resource "aws_security_group" "web_sg" {
 
 ### 6.1 How do you handle SG drift (manual changes in AWS)?
 
-- Always run `terraform plan` to detect differences in SG rules.[web:33][web:38]  
+- Always run `terraform plan` to detect differences in SG rules. 
 - Decide whether to **accept** the console change (update code) or **revert** it (apply Terraform state).  
 - Avoid manual security group edits in production; use Terraform pull requests for changes.  
 
@@ -329,8 +326,7 @@ resource "aws_security_group" "app_sg" {
 This demonstrates:
 
 - Public web tier accepting HTTP, private app tier only reachable from web tier.  
-- Clear separation of responsibilities and least privilege for network paths.[web:34]  
-
+- Clear separation of responsibilities and least privilege for network paths.
 
 
 
