@@ -70,8 +70,8 @@ resource "aws_instance" "web" {
   instance_type = "t3.micro"
 
 
-## Uses DEFAULT VPC (vpc-xxxxxdefault) and DEFAULT subnet (subnet-xxxxxdefault) automatically
-## No subnet_id or vpc_security_group_ids = AWS default security group (allows all inbound)
+### Uses DEFAULT VPC (vpc-xxxxxdefault) and DEFAULT subnet (subnet-xxxxxdefault) automatically
+### No subnet_id or vpc_security_group_ids = AWS default security group (allows all inbound)
 
 
   key_name = "your-existing-keypair-name"  # Replace with your actual keypair name
