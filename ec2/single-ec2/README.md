@@ -46,9 +46,11 @@ Key talking points:
 
 ---
 
-## 2. AWS Default VPC + Default Subnet
+## 2. AWS Default VPC + Default Subnet 
 
-# main.tf - Complete file using AWS Default VPC + Default Subnet
+### 2.1 Main.tf - Complete file using AWS Default VPC + Default Subnet 
+
+
 provider "aws" {
   region = "ap-south-1"
 }
@@ -66,9 +68,11 @@ data "aws_ami" "amazon_linux" {
 resource "aws_instance" "web" {
   ami           = data.aws_ami.amazon_linux.id
   instance_type = "t3.micro"
-  
-  # Uses DEFAULT VPC (vpc-xxxxxdefault) and DEFAULT subnet (subnet-xxxxxdefault) automatically
-  # No subnet_id or vpc_security_group_ids = AWS default security group (allows all inbound)
+
+
+## Uses DEFAULT VPC (vpc-xxxxxdefault) and DEFAULT subnet (subnet-xxxxxdefault) automatically
+## No subnet_id or vpc_security_group_ids = AWS default security group (allows all inbound)
+
 
   key_name = "your-existing-keypair-name"  # Replace with your actual keypair name
 
