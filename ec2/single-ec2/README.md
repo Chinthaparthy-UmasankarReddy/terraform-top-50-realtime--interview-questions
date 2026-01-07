@@ -226,6 +226,7 @@ curl $(terraform output -raw instance_public_ip)
 ```
 
 This single file creates everything needed and demonstrates production-like explicit resource referencing perfect for interviews.
+
 ---
 
 ## 3. Single EC2 with `user_data` (Bootstrap)
