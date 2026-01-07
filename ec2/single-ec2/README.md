@@ -46,7 +46,170 @@ Key talking points:
 
 ---
 
-## 2. Single EC2 in a Custom VPC
+## 2. AWS Default VPC + Default Subnet
+
+# main.tf - Complete file using AWS Default VPC + Default Subnet
+provider "aws" {
+  region = "ap-south-1"
+}
+
+data "aws_ami" "amazon_linux" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+  }
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.amazon_linux.id
+  instance_type = "t3.micro"
+  
+  # Uses DEFAULT VPC (vpc-xxxxxdefault) and DEFAULT subnet (subnet-xxxxxdefault) automatically
+  # No subnet_id or vpc_security_group_ids = AWS default security group (allows all inbound)
+
+  key_name = "your-existing-keypair-name"  # Replace with your actual keypair name
+
+  associate_public_ip_address = true
+
+  tags = {
+    Name        = "web-default-vpc-prod"
+    Environment = "prod"
+    Role        = "web"
+  }
+}
+```
+
+## Usage Steps
+1. **Replace** `key_name` with your actual EC2 keypair name from AWS Console
+2. `terraform init`
+3. `terraform plan` ✅ **No errors** - defaults always exist
+4. `terraform apply`
+
+## What Happens Automatically
+- **VPC**: Default VPC (`vpc-xxxxxdefault`) in `ap-south-1`
+- **Subnet**: Default public subnet in `ap-south-1a` (auto-selected)
+- **Security Group**: Default SG (allows **all inbound traffic** from anywhere)
+- **Internet Gateway**: Default VPC has IGW → **Public IP works**
+
+## Quick Verification Commands
+```bash
+# After terraform apply
+terraform output -raw public_ip    # Get public IP
+ssh -i your-key.pem ec2-user@<IP> # SSH works immediately
+```
+
+**Total resources created: 1** (just the EC2 instance). 
+
+
+
+## 3. Single EC2 with `user_data` (Bootstrap)
+
+### 3.1 Add `user_data` to configure the instance
+
+This pattern shows installing a simple web server via cloud‑init/bash.
+
+```hcl
+locals {
+  web_user_data = <<-EOF
+    #!/bin/bash
+    yum update -y
+    amazon-linux-extras install nginx1 -y
+    systemctl enable nginx
+    systemctl start nginx
+    echo "Hello from Terraform EC2" > /usr/share/nginx/html/index.html
+  EOF
+}
+
+resource "aws_instance" "web" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.ssh_http.id]
+  key_name               = aws_key_pair.main.key_name
+
+  user_data = local.web_user_data
+
+  tags = {
+    Name        = "web-single-with-userdata"
+    Environment = "dev"
+  }
+}
+```
+
+Discussion points:
+
+- `user_data` is run once at first boot and is ideal for simple provisioning (installing packages, writing configs).  
+- For more complex setups, you might move to configuration management (Ansible) or baking AMIs with Packer.  
+
+---
+
+## 4. Single EC2 with EBS Configuration
+
+### 4.1 Configure root and additional data volume
+
+```hcl
+resource "aws_instance" "db_like" {
+  ami                    = data.aws_ami.amazon_linux.id
+  instance_type          = "t3.small"
+  subnet_id              = aws_subnet.private.id
+  vpc_security_group_ids = [aws_security_group.db_sg.id]
+
+  # Root volume
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+    encrypted   = true
+  }
+
+  # Extra data volume
+  ebs_block_device {
+    device_name = "/dev/xvdb"
+    volume_size = 100
+    volume_type = "gp3"
+    encrypted   = true
+  }
+
+  tags = {
+    Name        = "single-db-like"
+    Environment = "stage"
+  }
+}
+```
+
+Points to mention:
+
+- You can control **size, type, and encryption** of root and data volumes directly in the instance resource. 
+- For independent lifecycle or attaching to different instances later, you use `aws_ebs_volume` + `aws_volume_attachment` instead.  
+
+---
+
+## 5. Recommended Interview Talking Points for “Single EC2”
+
+When asked to “create a single EC2 instance with Terraform”, strong answers include:
+
+- **Provider + backend**: mention configuring provider (region, credentials) and usually a remote backend, even if not fully shown in the snippet.  
+- **AMI strategy**: prefer data sources (`aws_ami`) with filters or a passed‑in AMI ID from a golden‑image pipeline.  
+- **Networking clarity**: explicitly choose subnet, security groups, and whether the instance is public or private (with NAT if needed).  
+- **Bootstrap**: show awareness of `user_data` for initial configuration and logging for troubleshooting.
+- **Tagging**: always tag instances with `Name`, `Environment`, `Owner` or similar for operations and cost tracking.  
+
+---
+
+## 6. Basic Workflow Commands
+
+For any of these examples, you should be able to describe this sequence:[web:20]
+
+```bash
+terraform init      # download providers, set up backend
+terraform validate  # syntax checks
+terraform plan      # show what will be created/changed
+terraform apply     # actually create the EC2 instance
+terraform destroy   # tear down the instance when finished
+```
+## 7.  Single EC2 in a Custom VPC
 
 ### 2.1 EC2 using explicit subnet and security group
 
@@ -226,113 +389,6 @@ curl $(terraform output -raw instance_public_ip)
 ```
 
 This single file creates everything needed and demonstrates production-like explicit resource referencing perfect for interviews.
-
----
-
-## 3. Single EC2 with `user_data` (Bootstrap)
-
-### 3.1 Add `user_data` to configure the instance
-
-This pattern shows installing a simple web server via cloud‑init/bash.
-
-```hcl
-locals {
-  web_user_data = <<-EOF
-    #!/bin/bash
-    yum update -y
-    amazon-linux-extras install nginx1 -y
-    systemctl enable nginx
-    systemctl start nginx
-    echo "Hello from Terraform EC2" > /usr/share/nginx/html/index.html
-  EOF
-}
-
-resource "aws_instance" "web" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.ssh_http.id]
-  key_name               = aws_key_pair.main.key_name
-
-  user_data = local.web_user_data
-
-  tags = {
-    Name        = "web-single-with-userdata"
-    Environment = "dev"
-  }
-}
-```
-
-Discussion points:
-
-- `user_data` is run once at first boot and is ideal for simple provisioning (installing packages, writing configs).  
-- For more complex setups, you might move to configuration management (Ansible) or baking AMIs with Packer.  
-
----
-
-## 4. Single EC2 with EBS Configuration
-
-### 4.1 Configure root and additional data volume
-
-```hcl
-resource "aws_instance" "db_like" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t3.small"
-  subnet_id              = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-
-  # Root volume
-  root_block_device {
-    volume_size = 30
-    volume_type = "gp3"
-    encrypted   = true
-  }
-
-  # Extra data volume
-  ebs_block_device {
-    device_name = "/dev/xvdb"
-    volume_size = 100
-    volume_type = "gp3"
-    encrypted   = true
-  }
-
-  tags = {
-    Name        = "single-db-like"
-    Environment = "stage"
-  }
-}
-```
-
-Points to mention:
-
-- You can control **size, type, and encryption** of root and data volumes directly in the instance resource. 
-- For independent lifecycle or attaching to different instances later, you use `aws_ebs_volume` + `aws_volume_attachment` instead.  
-
----
-
-## 5. Recommended Interview Talking Points for “Single EC2”
-
-When asked to “create a single EC2 instance with Terraform”, strong answers include:
-
-- **Provider + backend**: mention configuring provider (region, credentials) and usually a remote backend, even if not fully shown in the snippet.  
-- **AMI strategy**: prefer data sources (`aws_ami`) with filters or a passed‑in AMI ID from a golden‑image pipeline.  
-- **Networking clarity**: explicitly choose subnet, security groups, and whether the instance is public or private (with NAT if needed).  
-- **Bootstrap**: show awareness of `user_data` for initial configuration and logging for troubleshooting.
-- **Tagging**: always tag instances with `Name`, `Environment`, `Owner` or similar for operations and cost tracking.  
-
----
-
-## 6. Basic Workflow Commands
-
-For any of these examples, you should be able to describe this sequence:[web:20]
-
-```bash
-terraform init      # download providers, set up backend
-terraform validate  # syntax checks
-terraform plan      # show what will be created/changed
-terraform apply     # actually create the EC2 instance
-terraform destroy   # tear down the instance when finished
-```
 
 
 
