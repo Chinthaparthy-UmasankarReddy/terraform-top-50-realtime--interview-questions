@@ -50,18 +50,112 @@ Key talking points:
 
 ### 2.1 EC2 using explicit subnet and security group
 
-A more production‑like single instance references a specific subnet and security group instead of defaults.
+Here's the complete, self-contained Terraform file combining your explicit subnet/security group EC2 pattern with all required infrastructure:
 
 ```hcl
 provider "aws" {
   region = "ap-south-1"
 }
 
-# Assume these already exist or are created in other modules:
-# - aws_vpc.main
-# - aws_subnet.public
-# - aws_security_group.ssh_http
+# VPC
+resource "aws_vpc" "main" {
+  cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "main-vpc-prod"
+  }
+}
 
+# Internet Gateway
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+  tags = {
+    Name = "main-igw-prod"
+  }
+}
+
+# Public Subnet (ap-south-1a)
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "ap-south-1a"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "public-subnet-prod"
+  }
+}
+
+# Route Table for Public Subnet
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+  tags = {
+    Name = "public-rt-prod"
+  }
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Security Group for SSH (22) and HTTP (80) - Production-like
+resource "aws_security_group" "ssh_http" {
+  name_prefix = "web-sg-prod"
+  vpc_id      = aws_vpc.main.id
+
+  # SSH access (restrict to your IP in production)
+  ingress {
+    description = "SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # HTTP access
+  ingress {
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # All outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "ssh-http-sg-prod"
+  }
+}
+
+# Generate SSH Key Pair
+resource "tls_private_key" "main" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+resource "aws_key_pair" "main" {
+  key_name   = "web-key-prod"
+  public_key = tls_private_key.main.public_key_openssh
+}
+
+# Save private key locally
+resource "local_file" "private_key" {
+  content  = tls_private_key.main.private_key_pem
+  filename = "web-key-prod.pem"
+  file_permission = "0400"
+}
+
+# Data source for latest Amazon Linux 2 AMI (interview highlight)
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -70,16 +164,33 @@ data "aws_ami" "amazon_linux" {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 }
 
+# EC2 Instance using explicit subnet and security group (interview highlight)
 resource "aws_instance" "web" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t3.micro"
-  subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.ssh_http.id]
+  subnet_id              = aws_subnet.public.id              # Explicit public subnet
+  vpc_security_group_ids = [aws_security_group.ssh_http.id]  # Explicit security group
+
   key_name               = aws_key_pair.main.key_name
 
-  associate_public_ip_address = true
+  associate_public_ip_address = true  # Required for internet access in custom VPC
+
+  # User data to install and start Apache (demo web server)
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              echo "<h1>Terraform EC2 Demo - $(hostname -f)</h1>" > /var/www/html/index.html
+              EOF
 
   tags = {
     Name        = "web-single-prod"
@@ -87,14 +198,34 @@ resource "aws_instance" "web" {
     Role        = "web"
   }
 }
+
+# Output public IP for easy access
+output "instance_public_ip" {
+  value = aws_instance.web.public_ip
+}
+
+output "private_key_path" {
+  value = local_file.private_key.filename
+}
 ```
 
-What to highlight in an interview:
+## Interview Highlights
+- **Explicit dependencies**: References specific `aws_subnet.public` and `aws_security_group.ssh_http` instead of defaults
+- **AMI data source**: Dynamically fetches latest Amazon Linux 2 AMI using filters
+- **Public subnet routing**: `associate_public_ip_address = true` + IGW route table enables internet access
+- **Production-ready**: Key pair generation, proper security group rules, user data for web server
+- **Self-contained**: No external module dependencies
 
-- Using a **data source** to fetch the latest Amazon Linux 2 AMI by filter.
-- Explicitly attaching the instance to a **public subnet** and controlled security group rather than relying on defaults.  
-- `associate_public_ip_address` is needed (along with a public subnet route to IGW) for direct internet access.  
+## Usage
+```bash
+terraform init
+terraform plan
+terraform apply
+ssh -i web-key-prod.pem ec2-user@$(terraform output -raw instance_public_ip)
+curl $(terraform output -raw instance_public_ip)
+```
 
+This single file creates everything needed and demonstrates production-like explicit resource referencing perfect for interviews.
 ---
 
 ## 3. Single EC2 with `user_data` (Bootstrap)
